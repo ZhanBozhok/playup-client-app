@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react";
 import { getInitData } from "./telegram";
 import { authTelegram, type ClientUser } from "./api";
+import { HomeScreen, ScheduleScreen, EventDetailScreen, ProfileScreen } from "./screens";
 
-type State =
+type AuthState =
   | { phase: "loading" }
   | { phase: "ready"; user: ClientUser }
   | { phase: "error"; message: string };
 
+type Tab = "home" | "schedule" | "profile";
+
 export default function App() {
-  const [state, setState] = useState<State>({ phase: "loading" });
+  const [auth, setAuth] = useState<AuthState>({ phase: "loading" });
+  const [tab, setTab] = useState<Tab>("home");
+  const [eventId, setEventId] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -17,9 +22,9 @@ export default function App() {
         const initData = getInitData();
         const { token, user } = await authTelegram(initData);
         localStorage.setItem("playup_client_token", token);
-        if (alive) setState({ phase: "ready", user });
+        if (alive) setAuth({ phase: "ready", user });
       } catch (e) {
-        if (alive) setState({ phase: "error", message: e instanceof Error ? e.message : "Ошибка" });
+        if (alive) setAuth({ phase: "error", message: e instanceof Error ? e.message : "Ошибка" });
       }
     })();
     return () => {
@@ -27,64 +32,85 @@ export default function App() {
     };
   }, []);
 
-  if (state.phase === "loading") {
+  if (auth.phase === "loading") {
     return (
-      <Screen>
-        <div style={s.brand}>PlayUp</div>
-        <p style={s.muted}>Открываем приложение…</p>
-      </Screen>
+      <Centered>
+        <div style={brand}>PlayUp</div>
+        <p style={muted}>Открываем приложение…</p>
+      </Centered>
+    );
+  }
+  if (auth.phase === "error") {
+    return (
+      <Centered>
+        <div style={brand}>PlayUp</div>
+        <h1 style={{ fontFamily: "var(--font-heading)", fontSize: 28 }}>Не получилось открыть приложение</h1>
+        <p style={muted}>{auth.message}. Попробуй зайти заново из Telegram.</p>
+      </Centered>
     );
   }
 
-  if (state.phase === "error") {
-    return (
-      <Screen>
-        <div style={s.brand}>PlayUp</div>
-        <h1 style={s.title}>Не получилось открыть приложение</h1>
-        <p style={s.muted}>{state.message}. Попробуй зайти заново из Telegram.</p>
-      </Screen>
-    );
+  // event detail перекрывает таб
+  let content: React.ReactNode;
+  if (eventId) {
+    content = <EventDetailScreen id={eventId} onBack={() => setEventId(null)} />;
+  } else if (tab === "home") {
+    content = <HomeScreen user={auth.user} onOpenSchedule={() => setTab("schedule")} />;
+  } else if (tab === "schedule") {
+    content = <ScheduleScreen onOpenEvent={(id) => setEventId(id)} />;
+  } else {
+    content = <ProfileScreen user={auth.user} />;
   }
 
-  // ready — заглушка Главной (полноценная Главная и расписание появятся в Итерациях 1–2)
   return (
-    <Screen>
-      <div style={s.brand}>PlayUp</div>
-      <h1 style={s.title}>
-        Привет{state.user.telegram_username ? `, ${state.user.telegram_username}` : ""}
-      </h1>
-      <p style={s.muted}>
-        Ты в клубе. {state.user.profile_completed ? "Профиль заполнен." : "Профиль заполним при первой записи."}
-      </p>
-      <div style={s.card}>
-        <div style={s.cardTitle}>Скоро здесь</div>
-        <p style={s.muted}>Расписание игр и запись появятся в следующих итерациях.</p>
-      </div>
-    </Screen>
+    <div style={{ minHeight: "100vh" }}>
+      {content}
+      <nav style={navBar}>
+        <TabButton label="Главная" active={tab === "home" && !eventId} onClick={() => { setEventId(null); setTab("home"); }} />
+        <TabButton label="Расписание" active={tab === "schedule" && !eventId} onClick={() => { setEventId(null); setTab("schedule"); }} />
+        <TabButton label="Профиль" active={tab === "profile" && !eventId} onClick={() => { setEventId(null); setTab("profile"); }} />
+      </nav>
+    </div>
   );
 }
 
-function Screen({ children }: { children: React.ReactNode }) {
-  return <main style={s.screen}>{children}</main>;
+function TabButton({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        flex: 1,
+        background: "none",
+        border: "none",
+        padding: "12px 0",
+        fontSize: 13,
+        cursor: "pointer",
+        color: active ? "var(--color-green-800)" : "var(--color-muted)",
+        fontWeight: active ? 600 : 400,
+      }}
+    >
+      {label}
+    </button>
+  );
 }
 
-const s: Record<string, React.CSSProperties> = {
-  screen: {
-    minHeight: "100vh",
-    padding: "var(--space-7) var(--space-5)",
-    display: "flex",
-    flexDirection: "column",
-    gap: "var(--space-4)",
-  },
-  brand: { fontFamily: "var(--font-heading)", fontSize: 22, color: "var(--color-green-800)", fontWeight: 600 },
-  title: { fontSize: "var(--font-size-h1)", margin: "var(--space-3) 0 0", lineHeight: 1.15 },
-  muted: { color: "var(--color-graphite-600)", lineHeight: 1.6, margin: 0 },
-  card: {
-    marginTop: "var(--space-5)",
-    background: "#fff",
-    borderRadius: "var(--radius-xl)",
-    boxShadow: "0 8px 24px rgba(31,35,32,0.06)",
-    padding: "var(--space-6)",
-  },
-  cardTitle: { fontFamily: "var(--font-heading)", fontSize: 20, marginBottom: "var(--space-2)" },
+function Centered({ children }: { children: React.ReactNode }) {
+  return (
+    <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", gap: 12, padding: "var(--space-7) var(--space-5)" }}>
+      {children}
+    </main>
+  );
+}
+
+const brand: React.CSSProperties = { fontFamily: "var(--font-heading)", fontSize: 22, color: "var(--color-green-800)", fontWeight: 600 };
+const muted: React.CSSProperties = { color: "var(--color-graphite-600)", lineHeight: 1.6, margin: 0 };
+const navBar: React.CSSProperties = {
+  position: "fixed",
+  bottom: 0,
+  left: 0,
+  right: 0,
+  display: "flex",
+  background: "var(--color-cream-50)",
+  borderTop: "1px solid var(--color-line)",
+  paddingBottom: "env(safe-area-inset-bottom)",
 };
