@@ -37,6 +37,35 @@ const SOURCES: [string, string][] = [
 
 const s: Record<string, React.CSSProperties> = {
   screen: { padding: "var(--space-6) var(--space-5) 96px", display: "flex", flexDirection: "column", gap: "var(--space-4)" },
+  hero: {
+    position: "relative",
+    borderRadius: "var(--radius-xl)",
+    overflow: "hidden",
+    minHeight: 220,
+    display: "flex",
+    alignItems: "flex-end",
+    backgroundImage: "url(/hero-home.jpg)",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+  },
+  heroOverlay: {
+    position: "absolute",
+    inset: 0,
+    background: "linear-gradient(180deg, rgba(18,50,38,0.1) 0%, rgba(18,50,38,0.85) 100%)",
+  },
+  heroContent: { position: "relative", padding: "var(--space-5)" },
+  scheduleBanner: {
+    position: "relative",
+    borderRadius: "var(--radius-lg)",
+    overflow: "hidden",
+    minHeight: 110,
+    display: "flex",
+    alignItems: "flex-end",
+    padding: "var(--space-4)",
+    backgroundImage: "url(/hero-schedule.jpg)",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+  },
   brand: { fontFamily: "var(--font-heading)", fontSize: 20, color: "var(--color-green-800)", fontWeight: 600 },
   h1: { fontSize: "var(--font-size-h1)", margin: 0, lineHeight: 1.15 },
   muted: { color: "var(--color-graphite-600)", lineHeight: 1.6, margin: 0 },
@@ -74,8 +103,16 @@ export function HomeScreen({ onOpenSchedule, onOpenEvent }: { onOpenSchedule: ()
   const name = home?.user.display_name;
   return (
     <div style={s.screen}>
-      <div style={s.brand}>PlayUp</div>
-      <h1 style={s.h1}>Привет{name ? `, ${name}` : ""}</h1>
+      <div style={s.hero}>
+        <div style={s.heroOverlay} />
+        <div style={s.heroContent}>
+          <div style={{ ...s.brand, color: "var(--color-cream-50)" }}>PlayUp</div>
+          <h1 style={{ ...s.h1, color: "var(--color-cream-50)", marginTop: 6 }}>Привет{name ? `, ${name}` : ""}</h1>
+          <p style={{ color: "rgba(247,242,232,0.85)", margin: "6px 0 0", lineHeight: 1.5 }}>
+            Твой городской клуб. Игры, люди своего уровня, кофе после.
+          </p>
+        </div>
+      </div>
       {error && <p style={{ color: "var(--color-danger)" }}>{error}</p>}
       {!home && !error && <p style={s.muted}>Загрузка…</p>}
 
@@ -203,7 +240,10 @@ export function ScheduleScreen({ onOpenEvent }: { onOpenEvent: (id: string) => v
 
   return (
     <div style={s.screen}>
-      <h1 style={s.h1}>Расписание</h1>
+      <div style={s.scheduleBanner}>
+        <div style={s.heroOverlay} />
+        <h1 style={{ ...s.h1, color: "var(--color-cream-50)", position: "relative", margin: 0 }}>Расписание</h1>
+      </div>
       <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
         {FILTERS.map((f) => (
           <button
