@@ -55,11 +55,11 @@ export default function App() {
   if (eventId) {
     content = <EventDetailScreen id={eventId} onBack={() => setEventId(null)} />;
   } else if (tab === "home") {
-    content = <HomeScreen user={auth.user} onOpenSchedule={() => setTab("schedule")} />;
+    content = <HomeScreen onOpenSchedule={() => setTab("schedule")} onOpenEvent={(id) => setEventId(id)} />;
   } else if (tab === "schedule") {
     content = <ScheduleScreen onOpenEvent={(id) => setEventId(id)} />;
   } else {
-    content = <ProfileScreen user={auth.user} />;
+    content = <ProfileScreen />;
   }
 
   return (
