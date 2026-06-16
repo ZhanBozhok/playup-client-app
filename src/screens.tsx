@@ -7,11 +7,14 @@ import {
   updateProfile,
   bookEvent,
   cancelBooking,
+  getPendingSurveys,
+  submitSurvey,
   type EventListItem,
   type EventDetail,
   type HomeData,
   type Profile,
   type ProfileInput,
+  type PendingSurvey,
 } from "./api";
 import { fmtDate, fmtTime, activityLabel, spotsLabel } from "./format";
 
@@ -76,6 +79,9 @@ export function HomeScreen({ onOpenSchedule, onOpenEvent }: { onOpenSchedule: ()
       {error && <p style={{ color: "var(--color-danger)" }}>{error}</p>}
       {!home && !error && <p style={s.muted}>Загрузка…</p>}
 
+      <SurveysBlock />
+
+
       {home && home.upcoming_bookings.length === 0 && (
         <>
           <p style={s.muted}>Ты пока не записан на события.</p>
@@ -108,6 +114,75 @@ export function HomeScreen({ onOpenSchedule, onOpenEvent }: { onOpenSchedule: ()
           <button style={s.secondaryBtn} onClick={onOpenSchedule}>Открыть расписание</button>
         </>
       )}
+    </div>
+  );
+}
+
+// ---------- Surveys (после события) ----------
+function SurveysBlock() {
+  const [surveys, setSurveys] = useState<PendingSurvey[]>([]);
+  const [done, setDone] = useState<Record<string, boolean>>({});
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    getPendingSurveys().then(setSurveys).catch(() => {});
+  }, []);
+
+  const survey = surveys.find((x) => !done[x.id]);
+  if (!survey) return null;
+
+  async function send() {
+    if (!survey) return;
+    setBusy(true);
+    try {
+      await submitSurvey(survey.id, { answer_value: rating || undefined, answer_text: comment || undefined });
+      setDone((d) => ({ ...d, [survey.id]: true }));
+      setRating(0);
+      setComment("");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div style={{ ...s.card, background: "var(--color-green-900)", color: "var(--color-cream-50)" }}>
+      <div style={{ fontFamily: "var(--font-heading)", fontSize: 20, marginBottom: 4 }}>{survey.question}</div>
+      {survey.event_title && <p style={{ opacity: 0.8, margin: "0 0 12px", fontSize: 14 }}>{survey.event_title}</p>}
+      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            onClick={() => setRating(n)}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 999,
+              border: "1px solid rgba(247,242,232,0.4)",
+              cursor: "pointer",
+              fontSize: 16,
+              background: rating >= n ? "var(--color-sand-400)" : "transparent",
+              color: rating >= n ? "var(--color-graphite-900)" : "var(--color-cream-50)",
+            }}
+          >
+            {n}
+          </button>
+        ))}
+      </div>
+      <input
+        style={{ ...s.input, marginBottom: 10 }}
+        placeholder="Комментарий (необязательно)"
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+      />
+      <button
+        style={{ ...s.primaryBtn, background: "var(--color-sand-400)", color: "var(--color-graphite-900)" }}
+        onClick={send}
+        disabled={busy || (!rating && !comment.trim())}
+      >
+        {busy ? "Отправляем…" : "Отправить"}
+      </button>
     </div>
   );
 }

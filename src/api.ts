@@ -160,3 +160,29 @@ export async function updateProfile(patch: ProfileInput): Promise<Profile> {
   if (!res.ok) throw new Error("Не получилось сохранить профиль");
   return (await res.json()).profile;
 }
+
+export type PendingSurvey = {
+  id: string;
+  question: string;
+  answer_type: string;
+  event_title: string | null;
+};
+
+export async function getPendingSurveys(): Promise<PendingSurvey[]> {
+  const res = await fetch(`${BASE}/api/client/surveys`, { headers: { ...authHeaders() } });
+  if (!res.ok) return [];
+  return (await res.json()).surveys;
+}
+
+export async function submitSurvey(surveyId: string, answer: { answer_value?: number; answer_text?: string }) {
+  const res = await fetch(`${BASE}/api/client/surveys/${surveyId}/responses`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify(answer),
+  });
+  if (!res.ok) {
+    const d = await res.json().catch(() => null);
+    throw new Error(d?.error?.message ?? "Не получилось отправить ответ");
+  }
+  return res.json();
+}
