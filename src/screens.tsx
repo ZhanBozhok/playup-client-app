@@ -98,7 +98,11 @@ export function HomeScreen({ onOpenSchedule, onOpenEvent }: { onOpenSchedule: ()
                 {fmtDate.format(new Date(b.event.starts_at))}, {fmtTime.format(new Date(b.event.starts_at))}
               </p>
               {b.event.venue_name && <p style={s.muted}>{b.event.venue_name}</p>}
-              <p style={{ color: "var(--color-success)", fontSize: 14, marginTop: 8 }}>Ты записан · напомним перед игрой</p>
+              {b.event.status === "cancelled" ? (
+                <p style={{ color: "var(--color-danger)", fontSize: 14, marginTop: 8 }}>Событие отменено</p>
+              ) : (
+                <p style={{ color: "var(--color-success)", fontSize: 14, marginTop: 8 }}>Ты записан · напомним перед игрой</p>
+              )}
             </div>
           ))}
           <button style={s.secondaryBtn} onClick={onOpenSchedule}>Открыть расписание</button>
