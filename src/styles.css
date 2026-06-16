@@ -1,0 +1,50 @@
+/* PlayUp client design tokens — источник: 25_playup_design_system_style.md */
+:root {
+  --color-green-900: #123226;
+  --color-green-800: #173d2d;
+  --color-green-700: #1f4a36;
+
+  --color-cream-50: #f7f2e8;
+  --color-cream-100: #efe6d6;
+  --color-cream-200: #e5dac8;
+
+  --color-tobacco-600: #9a6a3a;
+  --color-sand-400: #c8ad7f;
+  --color-graphite-900: #1f2320;
+  --color-graphite-600: #5e625c;
+  --color-muted: #8a857b;
+  --color-line: #ded4c2;
+  --color-danger: #9a3f32;
+
+  --font-heading: "Cormorant Garamond", "Lora", Georgia, serif;
+  --font-body: "Inter", "Manrope", -apple-system, system-ui, sans-serif;
+
+  /* client type scale (25) */
+  --font-size-display: 40px;
+  --font-size-h1: 32px;
+  --font-size-body: 16px;
+
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-xl: 32px;
+
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-cream-50);
+  color: var(--color-graphite-900);
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2 { font-family: var(--font-heading); font-weight: 600; }
